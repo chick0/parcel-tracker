@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import re
 import json
 
 import requests
 from flask import Blueprint, Response
-from bs4 import BeautifulSoup
 
+NAME = "CJ 대한통운"
 
 bp = Blueprint(
     name=__name__.split(".")[-1],
@@ -32,28 +33,27 @@ def get(parcel: str):
     )
 
     response = requests.get(
-        url="https://www.lotteglogis.com/mobile/reservation/tracking/index"
+        url="https://www.cjlogistics.com/ko/tool/parcel/tracking"
     )
 
     cookie = response.headers['set-cookie']
+    csrf_value = re.findall(
+        pattern=b"var GLOBAL_CSRF_VALUE = \"(.*?)\";",
+        string=response.content
+    )[0].decode(encoding="utf-8")
 
     return requests.post(
-        url="https://www.lotteglogis.com/mobile/reservation/tracking/linkView",
+        url="https://www.cjlogistics.com/ko/tool/parcel/tracking-detail",
         data=dict(
-            InvNo=parcel
+            _csrf=csrf_value,
+            paramInvcNo=parcel
         ),
         cookies=dict(
-            JSESSIONID=cookie.split("JSESSIONID=")[-1].split(";")[0],
-            _xm_webid_1_=cookie.split("_xm_webid_1_=")[-1].split(";")[0]
+            SCOUTER=cookie.split("SCOUTER=")[-1].split(";")[0],
+            cjlogisticsFrontLangCookie=cookie.split("cjlogisticsFrontLangCookie=")[-1].split(";")[0],
+            JSESSIONID=cookie.split("JSESSIONID=")[-1].split(";")[0]
         )
     )
-
-
-def clean(some_str: str):
-    from string import whitespace
-    for i in whitespace:
-        some_str = some_str.replace(i, "")
-    return some_str
 
 
 @bp.route("/<string:parcel>/last")
@@ -73,24 +73,25 @@ def last(parcel):
             status=500
         )
 
-    soup = BeautifulSoup(response.content, "html.parser")
+    head = response.json()['parcelResultMap']['resultList'][0]
+    track = response.json()['parcelDetailResultMap']['resultList'][-1]
 
     head = dict(
-        send_by="비공개",
-        owner="비공개",
-        status=soup.find("table").find_all("tr")[-1].find("td").get_text(),
-        item_name="(미확인)"
+        send_by=head['sendrNm'],
+        owner=head['rcvrNm'],
+        status=track['scanNm'],
+        item_name=head['itemNm']
     )
 
-    tr = soup.find_all("table")[-1].find_all("tr")[1]
-    td = tr.find_all("td")
+    date = track['dTime'].split(".")[0].split(" ")[0]
+    time = track['dTime'].split(".")[0].split(" ")[-1]
 
     result = [
         dict(
-            timestamp=td[1].get_text().replace(" ", " "),
-            where=clean(td[2].get_text()),
-            status=clean(td[0].get_text()),
-            msg=clean(td[3].get_text())
+            timestamp=f"{date} {time[:5]}",
+            where=track['regBranNm'],
+            status=track['scanNm'],
+            msg=track['crgNm']
         )
     ]
 
@@ -123,31 +124,29 @@ def track_parcel(parcel: str):
             status=500
         )
 
-    soup = BeautifulSoup(response.content, "html.parser")
+    head = response.json()['parcelResultMap']['resultList'][0]
+    track = response.json()['parcelDetailResultMap']['resultList']
 
     head = dict(
-        send_by="비공개",
-        owner="비공개",
-        status=soup.find("table").find_all("tr")[-1].find("td").get_text(),
-        item_name="(미확인)"
+        send_by=head['sendrNm'],
+        owner=head['rcvrNm'],
+        status=track[-1]['scanNm'],
+        item_name=head['itemNm']
     )
 
     result = []
-    for tr in soup.find_all("table")[-1].find_all("tr"):
-        td = tr.find_all("td")
-        if len(td) == 0:
-            pass
-        else:
-            result.append(
-                dict(
-                    timestamp=td[1].get_text().replace(" ", " "),
-                    where=clean(td[2].get_text()),
-                    status=clean(td[0].get_text()),
-                    msg=clean(td[3].get_text())
-                )
-            )
+    for obj in track:
+        date = track['dTime'].split(".")[0].split(" ")[0]
+        time = track['dTime'].split(".")[0].split(" ")[-1]
 
-    result = list(reversed(result))
+        result.append(
+            dict(
+                timestamp=f"{date} {time[:5]}",
+                where=obj['regBranNm'],
+                status=obj['scanNm'],
+                msg=obj['crgNm']
+            )
+        )
 
     return Response(
         response=json.dumps(

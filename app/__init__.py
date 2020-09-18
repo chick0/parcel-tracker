@@ -9,11 +9,15 @@ from flask import Flask
 def create_app():
     app = Flask(__name__)
 
-    # API
-    for m in os.listdir(os.path.join("app", "views")):
-        if not m.startswith("__"):
+    # Show available api
+    from .views import api
+    app.register_blueprint(api.bp)
+
+    # Api Endpoint
+    for m in os.listdir(os.path.join("app", "api")):
+        if not m.startswith("__") and m.endswith(".py"):
             module = importlib.import_module(
-                name=f"app.views.{m.split('.py')[0]}"
+                name=f"app.api.{m.split('.py')[0]}"
             )
 
             app.register_blueprint(

@@ -6,6 +6,8 @@ import requests
 from flask import Blueprint, Response
 from bs4 import BeautifulSoup
 
+NAME = "우체국택배"
+
 bp = Blueprint(
     name=__name__.split(".")[-1],
     import_name=__name__,

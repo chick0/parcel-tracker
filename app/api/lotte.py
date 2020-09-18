@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import re
 import json
 
 import requests
 from flask import Blueprint, Response
+from bs4 import BeautifulSoup
+
+NAME = "롯데택배"
 
 bp = Blueprint(
     name=__name__.split(".")[-1],
@@ -31,27 +33,28 @@ def get(parcel: str):
     )
 
     response = requests.get(
-        url="https://www.cjlogistics.com/ko/tool/parcel/tracking"
+        url="https://www.lotteglogis.com/mobile/reservation/tracking/index"
     )
 
     cookie = response.headers['set-cookie']
-    csrf_value = re.findall(
-        pattern=b"var GLOBAL_CSRF_VALUE = \"(.*?)\";",
-        string=response.content
-    )[0].decode(encoding="utf-8")
 
     return requests.post(
-        url="https://www.cjlogistics.com/ko/tool/parcel/tracking-detail",
+        url="https://www.lotteglogis.com/mobile/reservation/tracking/linkView",
         data=dict(
-            _csrf=csrf_value,
-            paramInvcNo=parcel
+            InvNo=parcel
         ),
         cookies=dict(
-            SCOUTER=cookie.split("SCOUTER=")[-1].split(";")[0],
-            cjlogisticsFrontLangCookie=cookie.split("cjlogisticsFrontLangCookie=")[-1].split(";")[0],
-            JSESSIONID=cookie.split("JSESSIONID=")[-1].split(";")[0]
+            JSESSIONID=cookie.split("JSESSIONID=")[-1].split(";")[0],
+            _xm_webid_1_=cookie.split("_xm_webid_1_=")[-1].split(";")[0]
         )
     )
+
+
+def clean(some_str: str):
+    from string import whitespace
+    for i in whitespace:
+        some_str = some_str.replace(i, "")
+    return some_str
 
 
 @bp.route("/<string:parcel>/last")
@@ -71,25 +74,24 @@ def last(parcel):
             status=500
         )
 
-    head = response.json()['parcelResultMap']['resultList'][0]
-    track = response.json()['parcelDetailResultMap']['resultList'][-1]
+    soup = BeautifulSoup(response.content, "html.parser")
 
     head = dict(
-        send_by=head['sendrNm'],
-        owner=head['rcvrNm'],
-        status=track['scanNm'],
-        item_name=head['itemNm']
+        send_by="비공개",
+        owner="비공개",
+        status=soup.find("table").find_all("tr")[-1].find("td").get_text(),
+        item_name="(미확인)"
     )
 
-    date = track['dTime'].split(".")[0].split(" ")[0]
-    time = track['dTime'].split(".")[0].split(" ")[-1]
+    tr = soup.find_all("table")[-1].find_all("tr")[1]
+    td = tr.find_all("td")
 
     result = [
         dict(
-            timestamp=f"{date} {time[:5]}",
-            where=track['regBranNm'],
-            status=track['scanNm'],
-            msg=track['crgNm']
+            timestamp=td[1].get_text().replace(" ", " "),
+            where=clean(td[2].get_text()),
+            status=clean(td[0].get_text()),
+            msg=clean(td[3].get_text())
         )
     ]
 
@@ -122,29 +124,31 @@ def track_parcel(parcel: str):
             status=500
         )
 
-    head = response.json()['parcelResultMap']['resultList'][0]
-    track = response.json()['parcelDetailResultMap']['resultList']
+    soup = BeautifulSoup(response.content, "html.parser")
 
     head = dict(
-        send_by=head['sendrNm'],
-        owner=head['rcvrNm'],
-        status=track[-1]['scanNm'],
-        item_name=head['itemNm']
+        send_by="비공개",
+        owner="비공개",
+        status=soup.find("table").find_all("tr")[-1].find("td").get_text(),
+        item_name="(미확인)"
     )
 
     result = []
-    for obj in track:
-        date = track['dTime'].split(".")[0].split(" ")[0]
-        time = track['dTime'].split(".")[0].split(" ")[-1]
-
-        result.append(
-            dict(
-                timestamp=f"{date} {time[:5]}",
-                where=obj['regBranNm'],
-                status=obj['scanNm'],
-                msg=obj['crgNm']
+    for tr in soup.find_all("table")[-1].find_all("tr"):
+        td = tr.find_all("td")
+        if len(td) == 0:
+            pass
+        else:
+            result.append(
+                dict(
+                    timestamp=td[1].get_text().replace(" ", " "),
+                    where=clean(td[2].get_text()),
+                    status=clean(td[0].get_text()),
+                    msg=clean(td[3].get_text())
+                )
             )
-        )
+
+    result = list(reversed(result))
 
     return Response(
         response=json.dumps(
