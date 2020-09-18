@@ -69,7 +69,7 @@ def last(parcel):
         send_by=temp.find_all("td")[0].get_text(),
         owner=temp.find_all("td")[1].get_text(),
         status=temp.find_all("td")[3].get_text(),
-        item_name="(비공개)"
+        item_name="(미확인)"
     )
     del temp
 
