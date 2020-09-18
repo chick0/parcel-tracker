@@ -79,7 +79,7 @@ def last(parcel):
     result = [
         dict(
             timestamp=f"{date} {time}",
-            where=t.find_all("td")[2].get_text(),
+            where=clean(t.find_all("td")[2].get_text()),
             status=clean(some_str=t.find_all("td")[-1].get_text()),
             msg=clean(some_str=t.find_all("td")[-1].get_text())
         )
@@ -132,7 +132,7 @@ def track_parcel(parcel: str):
         result.append(
             dict(
                 timestamp=f"{date} {time}",
-                where=t.find_all("td")[2].get_text(),
+                where=clean(t.find_all("td")[2].get_text()),
                 status=clean(some_str=t.find_all("td")[-1].get_text()),
                 msg=clean(some_str=t.find_all("td")[-1].get_text())
             )
