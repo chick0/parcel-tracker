@@ -81,9 +81,12 @@ def last(parcel):
         item_name=head['itemNm']
     )
 
+    date = track['dTime'].split(".")[0].split(" ")[0]
+    time = track['dTime'].split(".")[0].split(" ")[-1]
+
     result = [
         dict(
-            timestamp=track['dTime'].split(".")[0],
+            timestamp=f"{date} {time[:5]}",
             where=track['regBranNm'],
             status=track['scanNm'],
             msg=track['crgNm']
@@ -131,9 +134,12 @@ def track_parcel(parcel: str):
 
     result = []
     for obj in track:
+        date = track['dTime'].split(".")[0].split(" ")[0]
+        time = track['dTime'].split(".")[0].split(" ")[-1]
+
         result.append(
             dict(
-                timestamp=obj['dTime'].split(".")[0],
+                timestamp=f"{date} {time[:5]}",
                 where=obj['regBranNm'],
                 status=obj['scanNm'],
                 msg=obj['crgNm']
