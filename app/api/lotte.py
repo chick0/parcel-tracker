@@ -20,6 +20,11 @@ def check_parcel(parcel: str):
     for s in ascii_letters + punctuation + whitespace:
         parcel = parcel.replace(s, "")
 
+    try:
+        int(parcel)
+    except ValueError:
+        raise ValueError("송장 번호는 숫자로만 입력해주시길 바랍니다")
+
     allow_length = [12, 10]
     if len(parcel) in allow_length:
         return parcel
