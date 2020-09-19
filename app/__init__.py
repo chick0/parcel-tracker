@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import json
 import importlib
 
 from flask import Flask
@@ -14,6 +15,7 @@ def create_app():
     app.register_blueprint(api.bp)
 
     # Api Endpoint
+    module_list = []
     for m in os.listdir(os.path.join("app", "api")):
         if not m.startswith("__") and m.endswith(".py"):
             module = importlib.import_module(
@@ -30,8 +32,20 @@ def create_app():
                 )
 
                 print(f"+ {m} -> '{name}'")
+                module_list.append(
+                    dict(
+                        code=m.split('.py')[0],
+                        name=name
+                    )
+                )
             except AttributeError:
                 print(f"- '{m}' is not registered")
+
+    with open(os.path.join("app", "endpoint.json"), mode="w", encoding="utf-8") as fp:
+        json.dump(
+            obj=module_list,
+            fp=fp
+        )
 
     print("-"*30)
     return app

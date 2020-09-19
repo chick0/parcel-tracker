@@ -15,27 +15,10 @@ bp = Blueprint(
 
 @bp.route("/")
 def show_available():
-    api_list = os.listdir(os.path.join("app", "api"))
-    module_list = []
-
-    for item in api_list:
-        if not item.startswith("__") and item.endswith(".py"):
-            module = importlib.import_module(
-                name=f"app.api.{item.split('.py')[0]}"
-            )
-
-            try:
-                module.__getattribute__("track_parcel")
-                module.__getattribute__("last")
-
-                module_list.append(
-                    dict(
-                        code=item.split('.py')[0],
-                        name=module.__getattribute__("NAME")
-                    )
-                )
-            except AttributeError:
-                pass
+    with open(os.path.join("app", "endpoint.json"), mode="r", encoding="utf-8") as fp:
+        module_list = json.load(
+            fp=fp
+        )
 
     return Response(
         response=json.dumps(
