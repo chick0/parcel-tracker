@@ -20,8 +20,18 @@ def create_app():
                 name=f"app.api.{m.split('.py')[0]}"
             )
 
-            app.register_blueprint(
-                blueprint=module.__getattribute__("bp")
-            )
+            try:
+                module.__getattribute__("track_parcel")
+                module.__getattribute__("last")
+                name = module.__getattribute__("NAME")
 
+                app.register_blueprint(
+                    blueprint=module.__getattribute__("bp")
+                )
+
+                print(f"+ {m} -> '{name}'")
+            except AttributeError:
+                print(f"- '{m}' is not registered")
+
+    print("-"*30)
     return app

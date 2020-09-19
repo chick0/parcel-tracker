@@ -25,6 +25,9 @@ def show_available():
             )
 
             try:
+                module.__getattribute__("track_parcel")
+                module.__getattribute__("last")
+
                 module_list.append(
                     dict(
                         code=item.split('.py')[0],
