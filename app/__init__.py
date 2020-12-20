@@ -15,7 +15,6 @@ def create_app():
             file_name = vp.split(".py")[0]
             try:
                 obj = getattr(getattr(__import__(f"app.views.{file_name}"), "views"), file_name)
-                company = getattr(obj, "NAME")
 
                 app.register_blueprint(
                     blueprint=getattr(obj, "bp")
@@ -24,7 +23,7 @@ def create_app():
                 module_list.append(
                     dict(
                         code=file_name,
-                        name=company
+                        name=getattr(obj, "NAME")
                     )
                 )
             except AttributeError:
