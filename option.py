@@ -1,12 +1,25 @@
 # -*- coding: utf-8 -*-
 
-class App:
-    # API 서버가 동작할 포트를 지정합니다.
-    # 기본 값은 '8082' 이며 nginx를 통한 리버스 프록시(reverse proxy)를 권장함
+class App:                 # 앱 관련
+    # 앱 이름
+    name = "parcel-tracker"
+
+
+class Server:              # 서버 관련
+    # 포트 번호
     port = 8282
 
 
-class Log:
-    # 웹 서버 로그를 남길 파일명을 정한다.
-    project = "parcel-tracker"
-    file = f"{project}.log"
+class Log:                 # 로그 관련
+    # 시작시간
+    from datetime import datetime
+    now = datetime.today()
+
+    # 파일명
+    from os import path, mkdir
+
+    if not path.isdir(path.join("log")):
+        mkdir("log")
+
+    name = f"{now.strftime('%Y-%m-%d %Hh %Mm %Ss')}.log"
+    file = path.join("log", name)

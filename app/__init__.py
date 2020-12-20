@@ -1,51 +1,41 @@
 # -*- coding: utf-8 -*-
+from json import dumps
+from os import listdir, path
 
-import os
-import json
-import importlib
-
-from flask import Flask
+from flask import Flask, Response
 
 
 def create_app():
     app = Flask(__name__)
 
-    # Show available api
-    from .views import api
-    app.register_blueprint(api.bp)
-
-    # Api Endpoint
     module_list = []
-    for m in os.listdir(os.path.join("app", "api")):
-        if not m.startswith("__") and m.endswith(".py"):
-            module = importlib.import_module(
-                name=f"app.api.{m.split('.py')[0]}"
-            )
 
+    for vp in listdir(path.join("app", "views")):
+        if not vp.startswith("__") and vp.endswith(".py"):
+            file_name = vp.split(".py")[0]
             try:
-                module.__getattribute__("track_parcel")
-                module.__getattribute__("last")
-                name = module.__getattribute__("NAME")
+                obj = getattr(getattr(__import__(f"app.views.{file_name}"), "views"), file_name)
+                company = getattr(obj, "NAME")
 
                 app.register_blueprint(
-                    blueprint=module.__getattribute__("bp")
+                    blueprint=getattr(obj, "bp")
                 )
 
-                print(f"+ {m} -> '{name}'")
                 module_list.append(
                     dict(
-                        code=m.split('.py')[0],
-                        name=name
+                        code=file_name,
+                        name=company
                     )
                 )
             except AttributeError:
-                print(f"- '{m}' is not registered")
+                print(f"[!] '{file_name}' is not view point")
 
-    with open(os.path.join("app", "endpoint.json"), mode="w", encoding="utf-8") as fp:
-        json.dump(
-            obj=module_list,
-            fp=fp
+    @app.route("/")
+    def show_available():
+        return Response(
+            response=dumps(obj=module_list),
+            mimetype="application/json",
+            status=200
         )
 
-    print("-"*30)
     return app

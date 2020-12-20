@@ -1,22 +1,3 @@
-# parcel tracker
-- Python 택배 api
-
-## 도움말
-### 설치 방법
-```markdown
-1. 'requirements.txt'에 설치된 패키지를 설치한다.
-    - 'pip install -r requirements.txt'
-2. 해당 api서버가 사용할 포트가 이미 사용중인지 확인한다.
-    - 기본 값: 8282
-    - 'option.py' 에서 변경이 가능함
-3. 'production.py'를 실행시키면 끝
-    - Linux: python3 production.py [or] python production.py
-    - Windows: production.py [or] python production.py
-```
-
-
-
-## API
 ### EndPoint
 ```markdown
 - /
@@ -60,16 +41,14 @@
     ```
 3. api 목록을 표시하는 경우
     ```json
-    {
-        "api": [
-            {
-                "code": "택배 회사 코드",
-                "name": "회사 이름"
-            }
-        ]
-    }
+    [
+        {
+            "code": "택배 회사 코드",
+            "name": "회사 이름"
+        }
+    ]
     ```
 
-## 기여자
+## 도와준 사람
 - cjlogistics.py
     - [KokoseiJ](https://github.com/KokoseiJ/) : csrf 토큰 관련
